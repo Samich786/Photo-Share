@@ -34,39 +34,60 @@ export function PhotoUploadForm() {
       body: data,
     })
 
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Upload failed' }))
+      throw new Error(error.error || 'Failed to upload image')
+    }
+
     const uploaded = await res.json()
+    if (!uploaded.secure_url) {
+      throw new Error('No image URL returned from upload')
+    }
     return uploaded.secure_url
   }
 
   async function handleSubmit(e: any) {
     e.preventDefault()
-    if (!imageFile) return alert('Please select an image')
+    if (!imageFile) {
+      alert('Please select an image')
+      return
+    }
 
     setLoading(true)
 
-    // 1) Upload image to Cloudinary
-    const imageUrl = await uploadToCloudinary(imageFile)
+    try {
+      // 1) Upload image to Cloudinary
+      const imageUrl = await uploadToCloudinary(imageFile)
 
-    // 2) Save photo in DB via your existing API
-    const payload = {
-      ...form,
-      people: form.people.split(',').map((x) => x.trim()),
-      imageUrl,
-    }
+      // 2) Save photo in DB via your existing API
+      const payload = {
+        ...form,
+        people: form.people.split(',').map((x) => x.trim()).filter((x) => x),
+        imageUrl,
+      }
 
-    const res = await fetch('/api/photos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+      const res = await fetch('/api/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
 
-    setLoading(false)
-
-    if (res.ok) {
-      alert('Photo uploaded!')
-      window.location.href = '/creator/dashboard'
-    } else {
-      alert('Failed to upload photo')
+      if (res.ok) {
+        alert('Photo uploaded successfully!')
+        // Reset form
+        setForm({ title: '', caption: '', location: '', people: '' })
+        setImageFile(null)
+        setPreview(null)
+        window.location.href = '/creator/dashboard'
+      } else {
+        const error = await res.json().catch(() => ({ error: 'Upload failed' }))
+        alert(error.error || 'Failed to save photo')
+      }
+    } catch (error: any) {
+      console.error('Upload error:', error)
+      alert(error.message || 'Failed to upload photo. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
