@@ -28,6 +28,9 @@ export async function GET(req: NextRequest) {
         id: user._id.toString(),
         email: user.email,
         role: user.role,
+        avatarUrl: user.avatarUrl || '',
+        displayName: user.displayName || '',
+        username: user.username || '',
       },
     });
   } catch (err) {

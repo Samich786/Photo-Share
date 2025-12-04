@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useToast } from '@/components/toast'
 
 interface Profile {
   id: string
@@ -19,12 +20,11 @@ interface Profile {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { showToast } = useToast()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   
   const [formData, setFormData] = useState({
     username: '',
@@ -63,8 +63,6 @@ export default function ProfilePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
-    setSuccess('')
     setSaving(true)
 
     try {
@@ -81,10 +79,10 @@ export default function ProfilePage() {
       }
 
       setProfile(prev => prev ? { ...prev, ...data.profile } : null)
-      setSuccess('Profile updated successfully!')
+      showToast('Profile updated successfully!', 'success')
       setEditing(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      showToast(err instanceof Error ? err.message : 'Something went wrong', 'error')
     } finally {
       setSaving(false)
     }
@@ -93,6 +91,8 @@ export default function ProfilePage() {
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+
+    showToast('Uploading avatar...', 'info')
 
     const formData = new FormData()
     formData.append('file', file)
@@ -114,11 +114,13 @@ export default function ProfilePage() {
 
         if (updateRes.ok) {
           setProfile(prev => prev ? { ...prev, avatarUrl: data.secure_url } : null)
-          setSuccess('Avatar updated!')
+          showToast('Avatar updated!', 'success')
         }
+      } else {
+        showToast('Failed to upload avatar', 'error')
       }
-    } catch (err) {
-      setError('Failed to upload avatar')
+    } catch {
+      showToast('Failed to upload avatar', 'error')
     }
   }
 
@@ -213,19 +215,19 @@ export default function ProfilePage() {
               </a>
             )}
 
-            <div className="flex justify-center sm:justify-start gap-4 sm:gap-6 mt-4 text-xs sm:text-sm">
-              <div className="text-center sm:text-left">
-                <span className="font-bold text-lg sm:text-xl block">{profile.postCount}</span>
-                <span className="text-gray-500">posts</span>
+            <div className="flex justify-center sm:justify-start gap-6 sm:gap-8 mt-4">
+              <div className="text-center">
+                <span className="font-bold text-xl sm:text-2xl block">{profile.postCount}</span>
+                <span className="text-gray-500 text-xs sm:text-sm">posts</span>
               </div>
-              <div className="text-center sm:text-left">
-                <span className="font-medium block text-gray-700">
+              <div className="text-center">
+                <span className="font-bold text-xl sm:text-2xl block">
                   {new Date(profile.createdAt).toLocaleDateString('en-US', { 
                     month: 'short', 
                     year: 'numeric' 
                   })}
                 </span>
-                <span className="text-gray-500">joined</span>
+                <span className="text-gray-500 text-xs sm:text-sm">joined</span>
               </div>
             </div>
           </div>
@@ -240,18 +242,6 @@ export default function ProfilePage() {
           </button>
         )}
       </div>
-
-      {/* Success/Error Messages */}
-      {success && (
-        <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-4 sm:mb-6 text-sm sm:text-base">
-          ✅ {success}
-        </div>
-      )}
-      {error && (
-        <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 sm:mb-6 text-sm sm:text-base">
-          ❌ {error}
-        </div>
-      )}
 
       {/* Edit Form */}
       {editing && (
@@ -319,7 +309,6 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => {
                   setEditing(false)
-                  setError('')
                   setFormData({
                     username: profile.username || '',
                     displayName: profile.displayName || '',

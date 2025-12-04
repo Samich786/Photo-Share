@@ -8,6 +8,9 @@ interface User {
   id: string
   email: string
   role: 'CREATOR' | 'CONSUMER'
+  avatarUrl?: string
+  displayName?: string
+  username?: string
 }
 
 export function Navbar() {
@@ -86,12 +89,18 @@ export function Navbar() {
                   href="/profile" 
                   className="flex items-center gap-2 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition"
                 >
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">
-                      {user.email[0].toUpperCase()}
-                    </span>
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center overflow-hidden">
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-white text-sm font-bold">
+                        {user.email[0].toUpperCase()}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-sm text-gray-700 hidden lg:inline">{user.email.split('@')[0]}</span>
+                  <span className="text-sm text-gray-700 hidden lg:inline">
+                    {user.displayName || user.username || user.email.split('@')[0]}
+                  </span>
                 </Link>
                 <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hidden lg:inline">{user.role}</span>
                 <button
@@ -143,13 +152,19 @@ export function Navbar() {
           {/* User info on mobile */}
           {user && (
             <div className="flex items-center gap-3 pb-3 mb-2 border-b">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">
-                  {user.email[0].toUpperCase()}
-                </span>
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center overflow-hidden">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-bold">
+                    {user.email[0].toUpperCase()}
+                  </span>
+                )}
               </div>
               <div>
-                <p className="font-medium text-gray-800">{user.email.split('@')[0]}</p>
+                <p className="font-medium text-gray-800">
+                  {user.displayName || user.username || user.email.split('@')[0]}
+                </p>
                 <p className="text-xs text-gray-500">{user.role}</p>
               </div>
             </div>

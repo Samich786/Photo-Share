@@ -5,6 +5,13 @@ import { Comment } from "@/models/Comment";
 import { Rating } from "@/models/Rating";
 import { getUserFromRequest } from "@/lib/session";
 
+// Helper: Detect media type from URL
+function detectMediaTypeFromUrl(url: string): 'image' | 'video' {
+  if (url.includes('/video/upload/')) return 'video';
+  if (/\.(mp4|webm|mov|avi|mkv)$/i.test(url)) return 'video';
+  return 'image';
+}
+
 // GET /api/creator/photos → list current creator's photos with comment/rating counts
 export async function GET(req: NextRequest) {
   try {
@@ -38,11 +45,16 @@ export async function GET(req: NextRequest) {
           Rating.countDocuments({ photoId: p._id }),
         ]);
 
+        // Auto-detect media type from URL for reliability
+        const detectedType = detectMediaTypeFromUrl(p.imageUrl);
+        const isVideo = detectedType === 'video';
+        
         return {
           id: p._id.toString(),
           title: p.title,
-          imageUrl: p.imageUrl,
-          mediaType: p.mediaType || 'image',
+          imageUrl: isVideo ? '' : p.imageUrl,
+          videoUrl: isVideo ? p.imageUrl : '',
+          mediaType: detectedType,
           thumbnailUrl: p.thumbnailUrl || '',
           createdAt: p.createdAt,
           _count: { comments: commentsCount, ratings: ratingsCount },

@@ -40,11 +40,17 @@ export async function GET(req: NextRequest) {
           Rating.countDocuments({ photoId: p._id }),
         ]);
 
+        // Auto-detect media type from URL for reliability
+        const detectedType = detectMediaTypeFromUrl(p.imageUrl);
+        const isVideo = detectedType === 'video';
+        
         return {
           id:       p._id.toString(),
           title:    p.title,
-          imageUrl: p.imageUrl,
-          mediaType: p.mediaType || 'image',
+          // Separate keys for image and video
+          imageUrl: isVideo ? '' : p.imageUrl,
+          videoUrl: isVideo ? p.imageUrl : '',
+          mediaType: detectedType,
           thumbnailUrl: p.thumbnailUrl || '',
           creator:  { id: p.creatorId?.toString() },
           _count:   { comments: commentsCount, ratings: ratingsCount },
@@ -57,6 +63,15 @@ export async function GET(req: NextRequest) {
     console.error("Get photos error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+// Helper: Detect media type from URL
+function detectMediaTypeFromUrl(url: string): 'image' | 'video' {
+  // Check URL path for Cloudinary video pattern
+  if (url.includes('/video/upload/')) return 'video';
+  // Check file extension
+  if (/\.(mp4|webm|mov|avi|mkv)$/i.test(url)) return 'video';
+  return 'image';
 }
 
 // =========================
@@ -76,6 +91,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Title + Media required" }, { status: 400 });
     }
 
+    // Auto-detect media type from URL if not provided or incorrect
+    const detectedType = detectMediaTypeFromUrl(imageUrl);
+    const finalMediaType = detectedType; // Always use URL-based detection for reliability
+
+    console.log("Creating photo with:", { imageUrl, mediaType, detectedType, finalMediaType });
+
     const photo = await Photo.create({
       creatorId: session.userId,
       title,
@@ -83,11 +104,11 @@ export async function POST(req: NextRequest) {
       location: location || "",
       people: people || [],
       imageUrl,
-      mediaType: mediaType || "image",
+      mediaType: finalMediaType,
       thumbnailUrl: thumbnailUrl || "",
     });
 
-    return NextResponse.json({ id: photo._id.toString(), title, imageUrl, mediaType }, { status: 201 });
+    return NextResponse.json({ id: photo._id.toString(), title, imageUrl, mediaType: finalMediaType }, { status: 201 });
   } catch (err) {
     console.error("Upload photo error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

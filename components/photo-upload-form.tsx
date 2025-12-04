@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from './toast'
 
 type MediaType = 'image' | 'video'
 
 export function PhotoUploadForm() {
+  const { showToast } = useToast()
   const [form, setForm] = useState({
     title: '',
     caption: '',
@@ -64,7 +66,7 @@ export function PhotoUploadForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!mediaFile) {
-      alert('Please select an image or video')
+      showToast('Please select an image or video', 'warning')
       return
     }
 
@@ -92,7 +94,7 @@ export function PhotoUploadForm() {
       })
 
       if (res.ok) {
-        alert('Media uploaded successfully!')
+        showToast('Media uploaded successfully!', 'success')
         // Reset form
         setForm({ title: '', caption: '', location: '', people: '' })
         setMediaFile(null)
@@ -101,11 +103,11 @@ export function PhotoUploadForm() {
         window.location.href = '/creator/dashboard'
       } else {
         const error = await res.json().catch(() => ({ error: 'Upload failed' }))
-        alert(error.error || 'Failed to save media')
+        showToast(error.error || 'Failed to save media', 'error')
       }
     } catch (error: unknown) {
       console.error('Upload error:', error)
-      alert(error instanceof Error ? error.message : 'Failed to upload. Please try again.')
+      showToast(error instanceof Error ? error.message : 'Failed to upload. Please try again.', 'error')
     } finally {
       setLoading(false)
       setUploadProgress('')

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useToast } from './toast'
 
 interface AuthFormProps {
   isLogin?: boolean
@@ -10,6 +11,7 @@ interface AuthFormProps {
 
 export function AuthForm({ isLogin = false }: AuthFormProps) {
   const router = useRouter()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [role, setRole] = useState<'CREATOR' | 'CONSUMER'>('CONSUMER')
@@ -42,6 +44,8 @@ export function AuthForm({ isLogin = false }: AuthFormProps) {
 
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Authentication failed')
+
+      showToast(isLogin ? 'Welcome back!' : 'Account created successfully!', 'success')
 
       if (data.user.role === 'CREATOR') {
         router.push('/creator/dashboard')

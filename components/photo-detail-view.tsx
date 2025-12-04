@@ -2,6 +2,25 @@
 
 import { sanitizeImage } from '@/utils/sanitize-image'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useToast } from './toast'
+
+// Helper: Extract Cloudinary cloud name from URL
+// URL format: https://res.cloudinary.com/{cloud_name}/video/upload/...
+function extractCloudName(url: string): string {
+  const match = url.match(/cloudinary\.com\/([^/]+)\//)
+  return match ? match[1] : ''
+}
+
+// Helper: Extract Cloudinary public ID from URL
+// URL format: https://res.cloudinary.com/{cloud}/video/upload/v{version}/{folder}/{public_id}.{ext}
+function extractCloudinaryPublicId(url: string): string {
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/)
+  if (match) {
+    return match[1]
+  }
+  return ''
+}
 
 interface User {
   id: string
@@ -22,6 +41,8 @@ export default function PhotoDetailView({
 }: {
   photoId: string;
 }) {
+  const router = useRouter()
+  const { showToast } = useToast()
   const [photo, setPhoto] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [commentText, setCommentText] = useState('')
@@ -29,6 +50,17 @@ export default function PhotoDetailView({
   const [user, setUser] = useState<User | null>(null)
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
+  
+  // Post edit state
+  const [editingPost, setEditingPost] = useState(false)
+  const [postForm, setPostForm] = useState({
+    title: '',
+    caption: '',
+    location: '',
+    people: '',
+  })
+  const [savingPost, setSavingPost] = useState(false)
+  const [deletingPost, setDeletingPost] = useState(false)
 
   // Get logged-in user info
   async function fetchUser() {
@@ -49,6 +81,13 @@ export default function PhotoDetailView({
 
     const data = await res.json()
     setPhoto(data)
+    // Populate edit form
+    setPostForm({
+      title: data.title || '',
+      caption: data.caption || '',
+      location: data.location || '',
+      people: data.people?.join(', ') || '',
+    })
     setLoading(false)
   }
 
@@ -57,9 +96,73 @@ export default function PhotoDetailView({
     fetchPhoto()
   }, [photoId])
 
+  // Update post
+  async function updatePost() {
+    if (!postForm.title.trim()) {
+      showToast('Title is required', 'warning')
+      return
+    }
+
+    setSavingPost(true)
+    try {
+      const res = await fetch(`/api/photos/${photoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: postForm.title,
+          caption: postForm.caption,
+          location: postForm.location,
+          people: postForm.people.split(',').map(p => p.trim()).filter(Boolean),
+        }),
+      })
+
+      if (res.ok) {
+        setEditingPost(false)
+        showToast('Post updated!', 'success')
+        fetchPhoto()
+      } else {
+        const data = await res.json()
+        showToast(data.error || 'Failed to update post', 'error')
+      }
+    } catch {
+      showToast('Failed to update post', 'error')
+    } finally {
+      setSavingPost(false)
+    }
+  }
+
+  // Delete post
+  async function deletePost() {
+    if (!confirm('Are you sure you want to delete this post? This cannot be undone.')) {
+      return
+    }
+
+    setDeletingPost(true)
+    try {
+      const res = await fetch(`/api/photos/${photoId}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        showToast('Post deleted successfully', 'success')
+        router.push('/')
+      } else {
+        const data = await res.json()
+        showToast(data.error || 'Failed to delete post', 'error')
+      }
+    } catch {
+      showToast('Failed to delete post', 'error')
+    } finally {
+      setDeletingPost(false)
+    }
+  }
+
   // Add comment
   async function submitComment() {
-    if (!commentText.trim()) return alert('Comment cannot be empty')
+    if (!commentText.trim()) {
+      showToast('Comment cannot be empty', 'warning')
+      return
+    }
 
     const res = await fetch(`/api/photos/${photoId}/comments`, {
       method: 'POST',
@@ -69,15 +172,19 @@ export default function PhotoDetailView({
 
     if (res.ok) {
       setCommentText('')
+      showToast('Comment added!', 'success')
       fetchPhoto()
     } else {
-      alert('Failed to add comment')
+      showToast('Failed to add comment', 'error')
     }
   }
 
   // Edit comment
   async function updateComment(commentId: string) {
-    if (!editText.trim()) return alert('Comment cannot be empty')
+    if (!editText.trim()) {
+      showToast('Comment cannot be empty', 'warning')
+      return
+    }
 
     const res = await fetch(`/api/comments/${commentId}`, {
       method: 'PUT',
@@ -88,10 +195,11 @@ export default function PhotoDetailView({
     if (res.ok) {
       setEditingCommentId(null)
       setEditText('')
+      showToast('Comment updated!', 'success')
       fetchPhoto()
     } else {
       const data = await res.json()
-      alert(data.error || 'Failed to update comment')
+      showToast(data.error || 'Failed to update comment', 'error')
     }
   }
 
@@ -104,10 +212,11 @@ export default function PhotoDetailView({
     })
 
     if (res.ok) {
+      showToast('Comment deleted', 'success')
       fetchPhoto()
     } else {
       const data = await res.json()
-      alert(data.error || 'Failed to delete comment')
+      showToast(data.error || 'Failed to delete comment', 'error')
     }
   }
 
@@ -121,9 +230,10 @@ export default function PhotoDetailView({
 
     if (res.ok) {
       setRatingValue(value)
+      showToast(`Rated ${value} stars!`, 'success')
       fetchPhoto()
     } else {
-      alert('Failed to rate')
+      showToast('Failed to rate', 'error')
     }
   }
 
@@ -145,27 +255,33 @@ export default function PhotoDetailView({
   }
 
   const isVideo = photo.mediaType === 'video'
+  const videoUrl = photo.videoUrl || ''
 
   return (
     <div className="space-y-6 sm:space-y-8 md:space-y-10">
       {/* Media (Image or Video) */}
       <div className="relative rounded-lg sm:rounded-xl overflow-hidden shadow-lg -mx-3 sm:mx-0 bg-black">
-        {isVideo ? (
+        {isVideo && videoUrl ? (
+          <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+            {/* Use iframe for Cloudinary video - more reliable */}
+            <iframe
+              src={`https://player.cloudinary.com/embed/?public_id=${extractCloudinaryPublicId(videoUrl)}&cloud_name=${extractCloudName(videoUrl)}&player[fluid]=true&player[controls]=true`}
+              className="absolute inset-0 w-full h-full"
+              allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+              allowFullScreen
+              style={{ border: 'none' }}
+            />
+          </div>
+        ) : isVideo ? (
+          // Fallback: direct video tag if URL parsing fails
           <video
-            key={photo.imageUrl}
+            key={videoUrl}
+            src={videoUrl}
             controls
             playsInline
-            preload="auto"
-            controlsList="nodownload"
-            crossOrigin="anonymous"
             className="w-full max-h-[300px] sm:max-h-[450px] md:max-h-[550px] object-contain mx-auto"
             poster={photo.thumbnailUrl || undefined}
-          >
-            <source src={photo.imageUrl} type="video/mp4" />
-            <source src={photo.imageUrl} type="video/webm" />
-            <source src={photo.imageUrl} type="video/quicktime" />
-            Your browser does not support the video tag.
-          </video>
+          />
         ) : (
           <img
             src={sanitizeImage(photo.imageUrl)}
@@ -182,6 +298,93 @@ export default function PhotoDetailView({
           </span>
         </div>
       </div>
+
+      {/* Creator Actions - Edit/Delete */}
+      {user && photo.creator?.id === user.id && (
+        <div className="flex gap-2 sm:gap-3">
+          <button
+            onClick={() => setEditingPost(!editingPost)}
+            className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition text-sm sm:text-base"
+          >
+            {editingPost ? '❌ Cancel Edit' : '✏️ Edit Post'}
+          </button>
+          <button
+            onClick={deletePost}
+            disabled={deletingPost}
+            className="flex-1 sm:flex-none px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 active:scale-95 transition disabled:opacity-50 text-sm sm:text-base"
+          >
+            {deletingPost ? 'Deleting...' : '🗑️ Delete'}
+          </button>
+        </div>
+      )}
+
+      {/* Edit Post Form */}
+      {editingPost && (
+        <div className="bg-gray-50 p-4 sm:p-6 rounded-xl space-y-4">
+          <h3 className="text-lg font-semibold">Edit Post</h3>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <input
+              type="text"
+              value={postForm.title}
+              onChange={(e) => setPostForm({ ...postForm, title: e.target.value })}
+              className="w-full px-3 py-2.5 border rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter title"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Caption</label>
+            <textarea
+              value={postForm.caption}
+              onChange={(e) => setPostForm({ ...postForm, caption: e.target.value })}
+              className="w-full px-3 py-2.5 border rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 resize-none"
+              rows={3}
+              placeholder="Write a caption..."
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              <input
+                type="text"
+                value={postForm.location}
+                onChange={(e) => setPostForm({ ...postForm, location: e.target.value })}
+                className="w-full px-3 py-2.5 border rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
+                placeholder="Where was this?"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tagged People</label>
+              <input
+                type="text"
+                value={postForm.people}
+                onChange={(e) => setPostForm({ ...postForm, people: e.target.value })}
+                className="w-full px-3 py-2.5 border rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
+                placeholder="Comma separated names"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setEditingPost(false)}
+              className="flex-1 py-2.5 border border-gray-300 rounded-lg font-medium hover:bg-gray-100 transition text-sm sm:text-base"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={updatePost}
+              disabled={savingPost}
+              className="flex-1 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50 text-sm sm:text-base"
+            >
+              {savingPost ? 'Saving...' : '💾 Save Changes'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Details */}
       <div className="space-y-2 sm:space-y-3">
