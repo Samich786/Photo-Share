@@ -36,9 +36,15 @@ export function Navbar() {
     loadUser()
   }, [pathname])
 
+  // Close menu when route changes
+  useEffect(() => {
+    setShowMenu(false)
+  }, [pathname])
+
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' })
     setUser(null)
+    setShowMenu(false)
     router.push('/')
     router.refresh()
   }
@@ -47,40 +53,35 @@ export function Navbar() {
 
   return (
     <nav className="bg-white border-b shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-5 py-4 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex justify-between items-center">
 
         {/* Logo */}
-        <Link href="/" className="text-2xl font-extrabold text-blue-600">
-          MediaShare
+        <Link href="/" className="text-xl sm:text-2xl font-extrabold text-blue-600">
+          📸 MediaShare
         </Link>
 
-        {/* If still loading user → avoid unwanted flicker */}
+        {/* Desktop Navigation */}
         {loading ? (
-          <span className="text-gray-400">Loading...</span>
+          <span className="text-gray-400 text-sm hidden md:block">Loading...</span>
         ) : (
-          <div className="hidden md:flex items-center gap-6">
-
-            {/* Always available */}
-            <Link href="/" className="text-gray-700 hover:text-black">
+          <div className="hidden md:flex items-center gap-4 lg:gap-6">
+            <Link href="/" className="text-gray-700 hover:text-black transition">
               Feed
             </Link>
 
-            {/* Only Creator sees dashboard + upload */}
             {user?.role === "CREATOR" && (
               <>
-                <Link href="/creator/dashboard" className="text-gray-700 hover:text-black">
+                <Link href="/creator/dashboard" className="text-gray-700 hover:text-black transition">
                   Dashboard
                 </Link>
-
-                <Link href="/creator/upload" className="text-gray-700 hover:text-black">
+                <Link href="/creator/upload" className="text-gray-700 hover:text-black transition">
                   Upload
                 </Link>
               </>
             )}
 
-            {/* If user logged in */}
             {user ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <Link 
                   href="/profile" 
                   className="flex items-center gap-2 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition"
@@ -90,26 +91,25 @@ export function Navbar() {
                       {user.email[0].toUpperCase()}
                     </span>
                   </div>
-                  <span className="text-sm text-gray-700">{user.email.split('@')[0]}</span>
+                  <span className="text-sm text-gray-700 hidden lg:inline">{user.email.split('@')[0]}</span>
                 </Link>
-                <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">{user.role}</span>
-
+                <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hidden lg:inline">{user.role}</span>
                 <button
                   onClick={logout}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-sm transition"
                 >
                   Logout
                 </button>
               </div>
             ) : (
-              !isAuthPage && ( /* Hide login/register when already on login/register */
-                <div className="flex items-center gap-3">
-                  <Link href="/login" className="text-blue-600 font-semibold hover:text-blue-900">
+              !isAuthPage && (
+                <div className="flex items-center gap-2">
+                  <Link href="/login" className="text-blue-600 font-semibold hover:text-blue-900 px-3 py-1.5">
                     Login
                   </Link>
                   <Link
                     href="/register"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-800 text-white rounded"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
                   >
                     Register
                   </Link>
@@ -122,57 +122,105 @@ export function Navbar() {
         {/* Mobile Menu Button */}
         <button
           onClick={() => setShowMenu(!showMenu)}
-          className="md:hidden text-gray-700 text-2xl"
+          className="md:hidden text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition"
+          aria-label="Toggle menu"
         >
-          ☰
+          {showMenu ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
         </button>
       </div>
 
-      {/* MOBILE MENU */}
-      {showMenu && (
-        <div className="md:hidden bg-gray-50 border-t px-4 pb-4 space-y-3">
+      {/* Mobile Menu - Slide down animation */}
+      <div className={`md:hidden overflow-hidden transition-all duration-300 ${showMenu ? 'max-h-96' : 'max-h-0'}`}>
+        <div className="bg-white border-t px-4 py-3 space-y-1">
+          {/* User info on mobile */}
+          {user && (
+            <div className="flex items-center gap-3 pb-3 mb-2 border-b">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold">
+                  {user.email[0].toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <p className="font-medium text-gray-800">{user.email.split('@')[0]}</p>
+                <p className="text-xs text-gray-500">{user.role}</p>
+              </div>
+            </div>
+          )}
 
-          <Link href="/" className="block text-gray-600 hover:text-black">
-            Feed
+          <Link 
+            href="/" 
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition"
+          >
+            <span>🏠</span>
+            <span>Feed</span>
           </Link>
 
           {user?.role === "CREATOR" && (
             <>
-              <Link href="/creator/dashboard" className="block text-gray-600 hover:text-black">
-                Dashboard
+              <Link 
+                href="/creator/dashboard" 
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition"
+              >
+                <span>📊</span>
+                <span>Dashboard</span>
               </Link>
-              <Link href="/creator/upload" className="block text-gray-600 hover:text-black">
-                Upload
+              <Link 
+                href="/creator/upload" 
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition"
+              >
+                <span>📤</span>
+                <span>Upload</span>
               </Link>
             </>
           )}
 
           {user ? (
             <>
-              <Link href="/profile" className="block text-gray-600 hover:text-black">
-                👤 Profile
-              </Link>
-              <button
-                onClick={logout}
-                className="w-full bg-red-600 text-white py-2 rounded"
+              <Link 
+                href="/profile" 
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition"
               >
-                Logout
-              </button>
+                <span>👤</span>
+                <span>Profile</span>
+              </Link>
+              <div className="pt-2 mt-2 border-t">
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 transition"
+                >
+                  <span>🚪</span>
+                  <span>Logout</span>
+                </button>
+              </div>
             </>
           ) : (
             !isAuthPage && (
-              <>
-                <Link href="/login" className="block bg-blue-600 text-white text-center py-2 rounded">
+              <div className="space-y-2 pt-2">
+                <Link 
+                  href="/login" 
+                  className="block w-full text-center py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition"
+                >
                   Login
                 </Link>
-                <Link href="/register" className="block bg-blue-600 text-white text-center py-2 rounded">
+                <Link 
+                  href="/register" 
+                  className="block w-full text-center py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                >
                   Register
                 </Link>
-              </>
+              </div>
             )
           )}
         </div>
-      )}
+      </div>
     </nav>
   )
 }

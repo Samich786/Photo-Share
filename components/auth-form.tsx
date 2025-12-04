@@ -59,26 +59,28 @@ export function AuthForm({ isLogin = false }: AuthFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
       <div>
-        <label className="block mb-2 font-medium">Email</label>
+        <label className="block mb-1.5 sm:mb-2 font-medium text-sm sm:text-base">Email</label>
         <input
           type="email"
           name="email"
           required
-          className="w-full border px-4 py-2 rounded-lg"
+          className="w-full border px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          placeholder="your@email.com"
           value={formData.email}
           onChange={handleChange}
         />
       </div>
 
       <div>
-        <label className="block mb-2 font-medium">Password</label>
+        <label className="block mb-1.5 sm:mb-2 font-medium text-sm sm:text-base">Password</label>
         <input
           type="password"
           name="password"
           required
-          className="w-full border px-4 py-2 rounded-lg"
+          className="w-full border px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          placeholder="••••••••"
           value={formData.password}
           onChange={handleChange}
         />
@@ -86,34 +88,42 @@ export function AuthForm({ isLogin = false }: AuthFormProps) {
 
       {!isLogin && (
         <div>
-          <label className="block mb-2 font-medium">Account Type</label>
+          <label className="block mb-1.5 sm:mb-2 font-medium text-sm sm:text-base">Account Type</label>
           <select
             name="role"
             value={role}
             onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
           >
-            <option value="CONSUMER">Consumer</option>
-            <option value="CREATOR">Creator</option>
+            <option value="CONSUMER">👀 Consumer - Browse & interact</option>
+            <option value="CREATOR">📷 Creator - Upload content</option>
           </select>
         </div>
       )}
 
-      {error && <p className="text-red-600">{error}</p>}
+      {error && (
+        <div className="bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm">
+          ❌ {error}
+        </div>
+      )}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg"
+        className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-3 sm:py-3.5 rounded-lg font-medium transition disabled:opacity-50 text-sm sm:text-base"
       >
-        {loading ? 'Loading...' : isLogin ? 'Login' : 'Register'}
+        {loading ? (
+          <span className="flex items-center justify-center gap-2">
+            <span className="animate-spin">⏳</span> Loading...
+          </span>
+        ) : isLogin ? 'Login' : 'Create Account'}
       </button>
 
-      <div className="text-center">
+      <div className="text-center text-sm sm:text-base">
         {isLogin ? "Don't have an account? " : 'Already have an account? '}
         <Link
           href={isLogin ? '/register' : '/login'}
-          className="text-blue-600 font-semibold"
+          className="text-blue-600 font-semibold hover:underline"
         >
           {isLogin ? 'Register' : 'Login'}
         </Link>

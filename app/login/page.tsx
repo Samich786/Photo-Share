@@ -9,14 +9,18 @@ export default function LoginPage() {
   useEffect(() => {
     async function check() {
       const res = await fetch("/api/auth/me");
-      if (res.ok) router.push("/"); // already logged in → redirect to Feed
+      if (res.ok) router.push("/");
     }
     check();
   }, []);
 
   return (
-    <div className="py-14">
-      <h1 className="text-3xl font-bold text-center mb-6">Login to PhotoShare</h1>
+    <div className="min-h-[70vh] flex flex-col justify-center py-8 sm:py-14">
+      <div className="text-center mb-6 sm:mb-8 px-4">
+        <div className="text-4xl sm:text-5xl mb-3">📸</div>
+        <h1 className="text-2xl sm:text-3xl font-bold">Welcome Back</h1>
+        <p className="text-gray-500 text-sm sm:text-base mt-1">Login to your MediaShare account</p>
+      </div>
       <AuthForm isLogin />
     </div>
   )

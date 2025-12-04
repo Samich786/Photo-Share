@@ -124,18 +124,19 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading profile...</div>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
       </div>
     )
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="text-center">
+          <div className="text-5xl mb-4">🔒</div>
           <p className="text-gray-500 mb-4">Please login to view your profile</p>
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link href="/login" className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg">
             Go to Login
           </Link>
         </div>
@@ -144,13 +145,14 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
       {/* Profile Header */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="flex items-start gap-6">
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
+        {/* Mobile: Stack vertically, Desktop: Side by side */}
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
           {/* Avatar */}
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
+          <div className="relative flex-shrink-0">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
               {profile.avatarUrl ? (
                 <img 
                   src={profile.avatarUrl} 
@@ -158,13 +160,13 @@ export default function ProfilePage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-3xl text-white font-bold">
+                <span className="text-2xl sm:text-3xl text-white font-bold">
                   {profile.email[0].toUpperCase()}
                 </span>
               )}
             </div>
-            <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-blue-700">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 sm:p-2 rounded-full cursor-pointer hover:bg-blue-700 active:scale-95 transition">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
@@ -178,9 +180,9 @@ export default function ProfilePage() {
           </div>
 
           {/* Info */}
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-xl font-semibold">
+          <div className="flex-1 text-center sm:text-left w-full">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 mb-2">
+              <h1 className="text-lg sm:text-xl font-semibold">
                 {profile.displayName || profile.username || profile.email.split('@')[0]}
               </h1>
               <span className={`px-2 py-0.5 text-xs rounded-full ${
@@ -197,7 +199,7 @@ export default function ProfilePage() {
             )}
             
             {profile.bio && (
-              <p className="text-gray-700 mb-2">{profile.bio}</p>
+              <p className="text-gray-700 text-sm sm:text-base mb-2">{profile.bio}</p>
             )}
             
             {profile.website && (
@@ -205,25 +207,25 @@ export default function ProfilePage() {
                 href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 text-sm hover:underline"
+                className="text-blue-600 text-sm hover:underline inline-block"
               >
-                {profile.website}
+                🔗 {profile.website}
               </a>
             )}
 
-            <div className="flex gap-6 mt-4 text-sm">
-              <div>
-                <span className="font-semibold">{profile.postCount}</span>
-                <span className="text-gray-500 ml-1">posts</span>
+            <div className="flex justify-center sm:justify-start gap-4 sm:gap-6 mt-4 text-xs sm:text-sm">
+              <div className="text-center sm:text-left">
+                <span className="font-bold text-lg sm:text-xl block">{profile.postCount}</span>
+                <span className="text-gray-500">posts</span>
               </div>
-              <div>
-                <span className="text-gray-500">Member since </span>
-                <span className="font-medium">
+              <div className="text-center sm:text-left">
+                <span className="font-medium block text-gray-700">
                   {new Date(profile.createdAt).toLocaleDateString('en-US', { 
                     month: 'short', 
                     year: 'numeric' 
                   })}
                 </span>
+                <span className="text-gray-500">joined</span>
               </div>
             </div>
           </div>
@@ -232,7 +234,7 @@ export default function ProfilePage() {
         {!editing && (
           <button
             onClick={() => setEditing(true)}
-            className="w-full mt-6 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition"
+            className="w-full mt-4 sm:mt-6 py-2.5 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 active:bg-gray-100 transition text-sm sm:text-base"
           >
             Edit Profile
           </button>
@@ -241,20 +243,20 @@ export default function ProfilePage() {
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-6">
-          {success}
+        <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-4 sm:mb-6 text-sm sm:text-base">
+          ✅ {success}
         </div>
       )}
       {error && (
-        <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-6">
-          {error}
+        <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 sm:mb-6 text-sm sm:text-base">
+          ❌ {error}
         </div>
       )}
 
       {/* Edit Form */}
       {editing && (
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-lg font-semibold mb-4">Edit Profile</h2>
+        <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
+          <h2 className="text-base sm:text-lg font-semibold mb-4">Edit Profile</h2>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -266,7 +268,7 @@ export default function ProfilePage() {
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 placeholder="your_username"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2.5 border rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-500 mt-1">3-30 characters, letters, numbers, underscores</p>
             </div>
@@ -280,7 +282,7 @@ export default function ProfilePage() {
                 value={formData.displayName}
                 onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                 placeholder="Your Name"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2.5 border rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -294,7 +296,7 @@ export default function ProfilePage() {
                 placeholder="Tell us about yourself..."
                 maxLength={150}
                 rows={3}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-3 sm:px-4 py-2.5 border rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">{formData.bio.length}/150 characters</p>
             </div>
@@ -308,11 +310,11 @@ export default function ProfilePage() {
                 value={formData.website}
                 onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                 placeholder="https://yourwebsite.com"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2.5 border rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-2 sm:pt-4">
               <button
                 type="button"
                 onClick={() => {
@@ -325,16 +327,16 @@ export default function ProfilePage() {
                     website: profile.website || '',
                   })
                 }}
-                className="flex-1 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition"
+                className="flex-1 py-2.5 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 active:bg-gray-100 transition text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 active:bg-blue-800 transition disabled:opacity-50 text-sm sm:text-base"
               >
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? 'Saving...' : 'Save'}
               </button>
             </div>
           </form>
@@ -342,31 +344,31 @@ export default function ProfilePage() {
       )}
 
       {/* Quick Links */}
-      <div className="mt-6 grid grid-cols-2 gap-4">
+      <div className="mt-4 sm:mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {profile.role === 'CREATOR' && (
           <>
             <Link 
               href="/creator/dashboard"
-              className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition text-center"
+              className="bg-white p-3 sm:p-4 rounded-lg shadow-md hover:shadow-lg active:scale-[0.98] transition text-center"
             >
-              <div className="text-2xl mb-2">📊</div>
-              <div className="font-medium">Dashboard</div>
+              <div className="text-xl sm:text-2xl mb-1 sm:mb-2">📊</div>
+              <div className="font-medium text-sm sm:text-base">Dashboard</div>
             </Link>
             <Link 
               href="/creator/upload"
-              className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition text-center"
+              className="bg-white p-3 sm:p-4 rounded-lg shadow-md hover:shadow-lg active:scale-[0.98] transition text-center"
             >
-              <div className="text-2xl mb-2">📤</div>
-              <div className="font-medium">Upload Media</div>
+              <div className="text-xl sm:text-2xl mb-1 sm:mb-2">📤</div>
+              <div className="font-medium text-sm sm:text-base">Upload</div>
             </Link>
           </>
         )}
         <Link 
           href="/"
-          className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition text-center"
+          className="bg-white p-3 sm:p-4 rounded-lg shadow-md hover:shadow-lg active:scale-[0.98] transition text-center"
         >
-          <div className="text-2xl mb-2">🏠</div>
-          <div className="font-medium">Feed</div>
+          <div className="text-xl sm:text-2xl mb-1 sm:mb-2">🏠</div>
+          <div className="font-medium text-sm sm:text-base">Feed</div>
         </Link>
       </div>
     </div>

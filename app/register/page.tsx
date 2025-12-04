@@ -10,14 +10,18 @@ export default function RegisterPage() {
   useEffect(() => {
     async function check() {
       const res = await fetch("/api/auth/me")
-      if (res.ok) router.push("/") // already logged in → go Home
+      if (res.ok) router.push("/")
     }
     check()
   }, [])
 
   return (
-    <div className="py-14">
-      <h1 className="text-3xl font-bold text-center mb-6">Register & Join MediaShare</h1>
+    <div className="min-h-[70vh] flex flex-col justify-center py-8 sm:py-14">
+      <div className="text-center mb-6 sm:mb-8 px-4">
+        <div className="text-4xl sm:text-5xl mb-3">🎉</div>
+        <h1 className="text-2xl sm:text-3xl font-bold">Join MediaShare</h1>
+        <p className="text-gray-500 text-sm sm:text-base mt-1">Create an account to get started</p>
+      </div>
       <AuthForm />
     </div>
   )

@@ -127,32 +127,47 @@ export default function PhotoDetailView({
     }
   }
 
-  if (loading) return <p className="text-center py-8">Loading...</p>
-  if (!photo) return <p className="text-center py-8">Media not found</p>
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+  
+  if (!photo) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-5xl mb-4">😢</div>
+        <p className="text-gray-500">Media not found</p>
+      </div>
+    )
+  }
 
   const isVideo = photo.mediaType === 'video'
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 sm:space-y-8 md:space-y-10">
       {/* Media (Image or Video) */}
-      <div className="relative rounded-xl overflow-hidden shadow-lg">
+      <div className="relative rounded-lg sm:rounded-xl overflow-hidden shadow-lg -mx-3 sm:mx-0">
         {isVideo ? (
           <video
             src={photo.imageUrl}
             controls
-            className="w-full max-h-[550px] object-contain bg-black"
+            playsInline
+            className="w-full max-h-[300px] sm:max-h-[450px] md:max-h-[550px] object-contain bg-black"
             poster={photo.thumbnailUrl}
           />
         ) : (
           <img
             src={sanitizeImage(photo.imageUrl)}
             alt={photo.title}
-            className="w-full max-h-[550px] object-cover"
+            className="w-full max-h-[300px] sm:max-h-[450px] md:max-h-[550px] object-cover"
           />
         )}
         {/* Media type badge */}
-        <div className="absolute top-4 left-4">
-          <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+        <div className="absolute top-2 left-2 sm:top-4 sm:left-4">
+          <span className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-full ${
             isVideo ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
           }`}>
             {isVideo ? '🎬 Video' : '📷 Photo'}
@@ -161,40 +176,43 @@ export default function PhotoDetailView({
       </div>
 
       {/* Details */}
-      <div className="space-y-3">
-        <h1 className="text-3xl font-bold">{photo.title}</h1>
-        <p className="text-gray-700">{photo.caption}</p>
+      <div className="space-y-2 sm:space-y-3">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{photo.title}</h1>
+        {photo.caption && (
+          <p className="text-gray-700 text-sm sm:text-base">{photo.caption}</p>
+        )}
         
-        {photo.location && (
-          <p className="text-gray-500 text-sm flex items-center gap-1">
-            📍 {photo.location}
-          </p>
-        )}
+        <div className="flex flex-wrap gap-3 text-xs sm:text-sm text-gray-500">
+          {photo.location && (
+            <span className="flex items-center gap-1">
+              📍 {photo.location}
+            </span>
+          )}
+          {photo.people?.length > 0 && (
+            <span className="flex items-center gap-1">
+              👥 {photo.people.join(', ')}
+            </span>
+          )}
+        </div>
 
-        {photo.people?.length > 0 && (
-          <div className="text-sm text-gray-600">
-            <strong>👥 People:</strong> {photo.people.join(', ')}
-          </div>
-        )}
-
-        <div className="text-sm text-gray-600">
+        <div className="text-xs sm:text-sm text-gray-600">
           <strong>Uploaded by:</strong> {photo.creator?.email}
         </div>
       </div>
 
       {/* Rating */}
-      <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
-        <h2 className="text-xl font-semibold">⭐ Rating</h2>
+      <div className="space-y-3 bg-gray-50 p-3 sm:p-4 rounded-lg">
+        <h2 className="text-lg sm:text-xl font-semibold">⭐ Rate this</h2>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {[1, 2, 3, 4, 5].map((value) => (
             <button
               key={value}
               onClick={() => submitRating(value)}
-              className={`px-4 py-2 rounded-lg transition ${
+              className={`flex-1 min-w-[50px] sm:min-w-0 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition text-sm sm:text-base ${
                 ratingValue === value 
-                  ? 'bg-yellow-500 text-white scale-110' 
-                  : 'bg-white border hover:bg-yellow-50'
+                  ? 'bg-yellow-500 text-white scale-105' 
+                  : 'bg-white border hover:bg-yellow-50 active:scale-95'
               }`}
             >
               {value} ★
@@ -202,55 +220,57 @@ export default function PhotoDetailView({
           ))}
         </div>
 
-        <p className="text-gray-700">
-          Average Rating: <strong>{photo.avgRating?.toFixed(1) || 'N/A'}</strong> ★
+        <p className="text-gray-700 text-sm sm:text-base">
+          Average: <strong className="text-yellow-600">{photo.avgRating?.toFixed(1) || 'N/A'}</strong> ★
         </p>
       </div>
 
       {/* Comments */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">💬 Comments ({photo.comments?.length || 0})</h2>
+        <h2 className="text-lg sm:text-xl font-semibold">
+          💬 Comments ({photo.comments?.length || 0})
+        </h2>
 
         {/* Add comment */}
         {user ? (
           <div className="space-y-2">
             <textarea
-              className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               placeholder="Write a comment..."
-              rows={3}
+              rows={2}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
             />
-
             <button
               onClick={submitComment}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+              disabled={!commentText.trim()}
+              className="w-full sm:w-auto bg-blue-600 text-white px-4 sm:px-6 py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               Post Comment
             </button>
           </div>
         ) : (
-          <p className="text-gray-500 bg-gray-50 p-4 rounded-lg">
-            Please <a href="/login" className="text-blue-600 hover:underline">login</a> to add a comment.
-          </p>
+          <div className="text-gray-500 bg-gray-50 p-4 rounded-lg text-center text-sm sm:text-base">
+            Please <a href="/login" className="text-blue-600 hover:underline font-medium">login</a> to add a comment.
+          </div>
         )}
 
         {/* List comments */}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {(!photo.comments || photo.comments.length === 0) && (
-            <p className="text-gray-500">No comments yet. Be the first to comment!</p>
+            <p className="text-gray-500 text-sm text-center py-4">No comments yet. Be the first to comment!</p>
           )}
 
           {photo.comments?.map((c: Comment) => (
-            <div key={c.id} className="p-4 border rounded-lg bg-white hover:shadow-sm transition">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800">{c.user.email}</p>
+            <div key={c.id} className="p-3 sm:p-4 border rounded-lg bg-white">
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-800 text-sm sm:text-base truncate">{c.user.email}</p>
                   
                   {editingCommentId === c.id ? (
                     <div className="mt-2 space-y-2">
                       <textarea
-                        className="w-full border px-3 py-2 rounded-lg"
+                        className="w-full border px-3 py-2 rounded-lg text-sm"
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
                         rows={2}
@@ -258,7 +278,7 @@ export default function PhotoDetailView({
                       <div className="flex gap-2">
                         <button
                           onClick={() => updateComment(c.id)}
-                          className="px-3 py-1 bg-green-600 text-white rounded text-sm"
+                          className="px-3 py-1.5 bg-green-600 text-white rounded text-xs sm:text-sm"
                         >
                           Save
                         </button>
@@ -267,42 +287,42 @@ export default function PhotoDetailView({
                             setEditingCommentId(null)
                             setEditText('')
                           }}
-                          className="px-3 py-1 bg-gray-300 rounded text-sm"
+                          className="px-3 py-1.5 bg-gray-200 rounded text-xs sm:text-sm"
                         >
                           Cancel
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-gray-700 mt-1">{c.text}</p>
+                    <p className="text-gray-700 mt-1 text-sm sm:text-base break-words">{c.text}</p>
                   )}
 
                   {c.rating && (
-                    <p className="text-sm mt-1 text-yellow-600">⭐ {c.rating}</p>
+                    <p className="text-xs sm:text-sm mt-1 text-yellow-600">⭐ {c.rating}</p>
                   )}
 
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-[10px] sm:text-xs text-gray-400 mt-2">
                     {new Date(c.createdAt).toLocaleString()}
                   </p>
                 </div>
 
                 {/* Edit/Delete buttons - only show for comment owner */}
                 {user && user.id === c.user.id && editingCommentId !== c.id && (
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 flex-shrink-0">
                     <button
                       onClick={() => {
                         setEditingCommentId(c.id)
                         setEditText(c.text)
                       }}
-                      className="text-blue-600 hover:text-blue-800 text-sm"
+                      className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm px-2 py-1"
                     >
-                      ✏️ Edit
+                      ✏️
                     </button>
                     <button
                       onClick={() => deleteComment(c.id)}
-                      className="text-red-600 hover:text-red-800 text-sm"
+                      className="text-red-600 hover:text-red-800 text-xs sm:text-sm px-2 py-1"
                     >
-                      🗑️ Delete
+                      🗑️
                     </button>
                   </div>
                 )}
