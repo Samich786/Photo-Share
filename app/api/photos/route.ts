@@ -44,6 +44,8 @@ export async function GET(req: NextRequest) {
           id:       p._id.toString(),
           title:    p.title,
           imageUrl: p.imageUrl,
+          mediaType: p.mediaType || 'image',
+          thumbnailUrl: p.thumbnailUrl || '',
           creator:  { id: p.creatorId?.toString() },
           _count:   { comments: commentsCount, ratings: ratingsCount },
         };
@@ -69,9 +71,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Only creators can upload" }, { status: 403 });
     }
 
-    const { title, caption, location, people, imageUrl } = await req.json();
+    const { title, caption, location, people, imageUrl, mediaType, thumbnailUrl } = await req.json();
     if (!title || !imageUrl) {
-      return NextResponse.json({ error: "Title + Image required" }, { status: 400 });
+      return NextResponse.json({ error: "Title + Media required" }, { status: 400 });
     }
 
     const photo = await Photo.create({
@@ -81,9 +83,11 @@ export async function POST(req: NextRequest) {
       location: location || "",
       people: people || [],
       imageUrl,
+      mediaType: mediaType || "image",
+      thumbnailUrl: thumbnailUrl || "",
     });
 
-    return NextResponse.json({ id: photo._id.toString(), title, imageUrl }, { status: 201 });
+    return NextResponse.json({ id: photo._id.toString(), title, imageUrl, mediaType }, { status: 201 });
   } catch (err) {
     console.error("Upload photo error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

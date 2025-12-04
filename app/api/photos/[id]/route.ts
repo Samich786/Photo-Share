@@ -60,6 +60,8 @@ export async function GET(
       location: photoDoc.location,
       people: photoDoc.people,
       imageUrl: photoDoc.imageUrl,
+      mediaType: photoDoc.mediaType || 'image',
+      thumbnailUrl: photoDoc.thumbnailUrl || '',
 
       creator: creator
         ? { id: creator._id.toString(), email: creator.email }

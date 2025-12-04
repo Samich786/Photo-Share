@@ -81,7 +81,17 @@ export function Navbar() {
             {/* If user logged in */}
             {user ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">{user.email}</span>
+                <Link 
+                  href="/profile" 
+                  className="flex items-center gap-2 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">
+                      {user.email[0].toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-700">{user.email.split('@')[0]}</span>
+                </Link>
                 <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">{user.role}</span>
 
                 <button
@@ -138,12 +148,17 @@ export function Navbar() {
           )}
 
           {user ? (
-            <button
-              onClick={logout}
-              className="w-full bg-red-600 text-white py-2 rounded"
-            >
-              Logout
-            </button>
+            <>
+              <Link href="/profile" className="block text-gray-600 hover:text-black">
+                👤 Profile
+              </Link>
+              <button
+                onClick={logout}
+                className="w-full bg-red-600 text-white py-2 rounded"
+              >
+                Logout
+              </button>
+            </>
           ) : (
             !isAuthPage && (
               <>
