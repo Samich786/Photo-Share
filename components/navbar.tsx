@@ -25,12 +25,16 @@ export function Navbar() {
         if (res.ok) {
           const data = await res.json()
           setUser(data.user)
+        } else {
+          setUser(null)
         }
-      } catch {}
+      } catch {
+        setUser(null)
+      }
       finally { setLoading(false) }
     }
     loadUser()
-  }, [])
+  }, [pathname])
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' })
