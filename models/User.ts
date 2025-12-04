@@ -23,7 +23,7 @@ const UserSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ["CREATOR", "CONSUMER"], default: "CONSUMER" },
     // Profile fields
-    username: { type: String, unique: true, sparse: true },
+    username: { type: String, sparse: true, index: { unique: true, sparse: true } },
     displayName: { type: String, default: "" },
     bio: { type: String, default: "", maxlength: 150 },
     avatarUrl: { type: String, default: "" },
@@ -31,6 +31,14 @@ const UserSchema = new Schema<IUser>(
   },
   { timestamps: true }
 );
+
+// Pre-save hook to convert empty username to undefined (for sparse index)
+UserSchema.pre('save', function(next) {
+  if (this.username === '' || this.username === null) {
+    this.username = undefined as any;
+  }
+  next();
+});
 
 export const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>("User", UserSchema);

@@ -13,6 +13,42 @@ interface User {
   username?: string
 }
 
+// Avatar component with loading and error states
+function UserAvatar({ user, size = 'md' }: { user: User; size?: 'sm' | 'md' }) {
+  const [imgError, setImgError] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
+  
+  const sizeClass = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10'
+  const textSize = size === 'sm' ? 'text-sm' : 'text-base'
+  
+  const showImage = user.avatarUrl && !imgError
+  
+  return (
+    <div className={`${sizeClass} bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0`}>
+      {showImage ? (
+        <>
+          {!imgLoaded && (
+            <span className={`text-white font-bold ${textSize}`}>
+              {user.email?.[0]?.toUpperCase() || '?'}
+            </span>
+          )}
+          <img 
+            src={user.avatarUrl} 
+            alt="Avatar" 
+            className={`w-full h-full object-cover ${imgLoaded ? 'block' : 'hidden'}`}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+          />
+        </>
+      ) : (
+        <span className={`text-white font-bold ${textSize}`}>
+          {user.email?.[0]?.toUpperCase() || '?'}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
@@ -24,7 +60,10 @@ export function Navbar() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const res = await fetch('/api/auth/me')
+        // Add cache-busting timestamp to ensure fresh data
+        const res = await fetch(`/api/auth/me?t=${Date.now()}`, {
+          cache: 'no-store'
+        })
         if (res.ok) {
           const data = await res.json()
           setUser(data.user)
@@ -89,15 +128,7 @@ export function Navbar() {
                   href="/profile" 
                   className="flex items-center gap-2 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition"
                 >
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center overflow-hidden">
-                    {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-white text-sm font-bold">
-                        {user.email[0].toUpperCase()}
-                      </span>
-                    )}
-                  </div>
+                  <UserAvatar user={user} size="sm" />
                   <span className="text-sm text-gray-700 hidden lg:inline">
                     {user.displayName || user.username || user.email.split('@')[0]}
                   </span>
@@ -152,15 +183,7 @@ export function Navbar() {
           {/* User info on mobile */}
           {user && (
             <div className="flex items-center gap-3 pb-3 mb-2 border-b">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center overflow-hidden">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-white font-bold">
-                    {user.email[0].toUpperCase()}
-                  </span>
-                )}
-              </div>
+              <UserAvatar user={user} size="md" />
               <div>
                 <p className="font-medium text-gray-800">
                   {user.displayName || user.username || user.email.split('@')[0]}

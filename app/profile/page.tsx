@@ -18,6 +18,39 @@ interface Profile {
   createdAt: string
 }
 
+// Profile Avatar with loading state
+function ProfileAvatar({ avatarUrl, email }: { avatarUrl: string; email: string }) {
+  const [imgError, setImgError] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
+  
+  const showImage = avatarUrl && !imgError
+  
+  return (
+    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
+      {showImage ? (
+        <>
+          {!imgLoaded && (
+            <span className="text-2xl sm:text-3xl text-white font-bold">
+              {email?.[0]?.toUpperCase() || '?'}
+            </span>
+          )}
+          <img 
+            src={avatarUrl} 
+            alt="Avatar" 
+            className={`w-full h-full object-cover ${imgLoaded ? 'block' : 'hidden'}`}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+          />
+        </>
+      ) : (
+        <span className="text-2xl sm:text-3xl text-white font-bold">
+          {email?.[0]?.toUpperCase() || '?'}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const router = useRouter()
   const { showToast } = useToast()
@@ -39,13 +72,17 @@ export default function ProfilePage() {
 
   async function fetchProfile() {
     try {
-      const res = await fetch('/api/profile')
+      // Add cache-busting to ensure fresh data
+      const res = await fetch(`/api/profile?t=${Date.now()}`, {
+        cache: 'no-store'
+      })
       if (res.status === 401) {
         router.push('/login')
         return
       }
       if (res.ok) {
         const data = await res.json()
+        console.log('Fetched profile:', data.profile)
         setProfile(data.profile)
         setFormData({
           username: data.profile.username || '',
@@ -92,34 +129,71 @@ export default function ProfilePage() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select an image file', 'error')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image must be less than 5MB', 'error')
+      return
+    }
+
     showToast('Uploading avatar...', 'info')
 
-    const formData = new FormData()
-    formData.append('file', file)
+    const uploadFormData = new FormData()
+    uploadFormData.append('file', file)
 
     try {
       const res = await fetch('/api/upload', {
         method: 'POST',
-        body: formData,
+        body: uploadFormData,
       })
 
-      if (res.ok) {
-        const data = await res.json()
-        // Update avatar
-        const updateRes = await fetch('/api/profile', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ avatarUrl: data.secure_url }),
-        })
-
-        if (updateRes.ok) {
-          setProfile(prev => prev ? { ...prev, avatarUrl: data.secure_url } : null)
-          showToast('Avatar updated!', 'success')
-        }
-      } else {
-        showToast('Failed to upload avatar', 'error')
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: 'Upload failed' }))
+        showToast(error.error || 'Failed to upload avatar', 'error')
+        return
       }
-    } catch {
+
+      const data = await res.json()
+      console.log('Upload response:', data)
+      
+      if (!data.secure_url) {
+        showToast('No image URL returned', 'error')
+        return
+      }
+
+      const avatarUrl = data.secure_url
+      console.log('Updating avatar to:', avatarUrl)
+
+      // Update avatar in database
+      const updateRes = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatarUrl }),
+      })
+
+      const updateData = await updateRes.json()
+      console.log('Profile update response:', updateData)
+
+      if (updateRes.ok && updateData.profile?.avatarUrl) {
+        setProfile(prev => prev ? { ...prev, avatarUrl: updateData.profile.avatarUrl } : null)
+        showToast('Avatar updated!', 'success')
+        // Refresh the page to update navbar
+        router.refresh()
+      } else if (updateRes.ok) {
+        // Update succeeded but avatarUrl not in response - use the uploaded URL
+        setProfile(prev => prev ? { ...prev, avatarUrl } : null)
+        showToast('Avatar updated!', 'success')
+        router.refresh()
+      } else {
+        showToast(updateData.error || 'Failed to save avatar', 'error')
+      }
+    } catch (err) {
+      console.error('Avatar upload error:', err)
       showToast('Failed to upload avatar', 'error')
     }
   }
@@ -154,19 +228,7 @@ export default function ProfilePage() {
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
           {/* Avatar */}
           <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
-              {profile.avatarUrl ? (
-                <img 
-                  src={profile.avatarUrl} 
-                  alt="Avatar" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-2xl sm:text-3xl text-white font-bold">
-                  {profile.email[0].toUpperCase()}
-                </span>
-              )}
-            </div>
+            <ProfileAvatar avatarUrl={profile.avatarUrl} email={profile.email} />
             <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 sm:p-2 rounded-full cursor-pointer hover:bg-blue-700 active:scale-95 transition">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />

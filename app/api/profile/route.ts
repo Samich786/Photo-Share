@@ -64,10 +64,13 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    const { username, displayName, bio, avatarUrl, website } = await req.json();
+    const body = await req.json();
+    console.log("Profile update request body:", JSON.stringify(body, null, 2));
+    
+    const { username, displayName, bio, avatarUrl, website } = body;
 
-    // Validate username if provided
-    if (username) {
+    // Validate username if provided and not empty
+    if (username && username.trim()) {
       // Username must be alphanumeric with underscores, 3-30 chars
       const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
       if (!usernameRegex.test(username)) {
@@ -98,25 +101,62 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    const updateData: Record<string, string> = {};
-    if (username !== undefined) updateData.username = username.toLowerCase();
-    if (displayName !== undefined) updateData.displayName = displayName;
-    if (bio !== undefined) updateData.bio = bio;
-    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
-    if (website !== undefined) updateData.website = website;
+    // Build update object - only include fields that are provided
+    const updateData: Record<string, any> = {};
+    
+    if (username !== undefined && username !== null) {
+      // Use undefined for empty username to work with sparse index
+      updateData.username = username.trim() ? username.toLowerCase() : undefined;
+    }
+    if (displayName !== undefined && displayName !== null) {
+      updateData.displayName = displayName;
+    }
+    if (bio !== undefined && bio !== null) {
+      updateData.bio = bio;
+    }
+    if (avatarUrl !== undefined && avatarUrl !== null) {
+      updateData.avatarUrl = avatarUrl;
+    }
+    if (website !== undefined && website !== null) {
+      updateData.website = website;
+    }
 
-    const user = await User.findByIdAndUpdate(
-      session.userId,
-      { $set: updateData },
-      { new: true }
-    ).select("-passwordHash");
+    console.log("Update data:", JSON.stringify(updateData, null, 2));
 
-    if (!user) {
+    // Only update if there's something to update
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { error: "No fields to update" },
+        { status: 400 }
+      );
+    }
+
+    // Use updateOne for more reliable database update
+    const updateResult = await User.updateOne(
+      { _id: session.userId },
+      { $set: updateData }
+    );
+
+    console.log("Update result:", updateResult);
+
+    if (updateResult.matchedCount === 0) {
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
       );
     }
+
+    // Fetch the updated user
+    const user = await User.findById(session.userId).select("-passwordHash");
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found after update" },
+        { status: 404 }
+      );
+    }
+    
+    console.log("Updated user avatarUrl:", user.avatarUrl);
 
     return NextResponse.json({
       message: "Profile updated",
