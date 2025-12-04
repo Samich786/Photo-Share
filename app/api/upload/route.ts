@@ -10,12 +10,12 @@ const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB for images
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
+    // Check authentication - allow all authenticated users (for avatars)
     const session = getUserFromRequest(req);
-    if (!session || session.role !== "CREATOR") {
+    if (!session) {
       return NextResponse.json(
-        { error: "Only creators can upload media" },
-        { status: 403 }
+        { error: "Please login to upload" },
+        { status: 401 }
       );
     }
 
@@ -64,12 +64,22 @@ export async function POST(req: NextRequest) {
         {
           folder: "media_share_app",
           resource_type: isVideo ? "video" : "image",
-          // Generate thumbnail for videos
-          ...(isVideo && { eager: [{ format: "jpg", transformation: [{ width: 400, height: 400, crop: "fill" }] }] }),
+          // Generate thumbnail for videos - use eager_async for faster response
+          ...(isVideo && { 
+            eager: [
+              { format: "jpg", transformation: [{ width: 400, height: 400, crop: "fill", start_offset: "0" }] }
+            ],
+            eager_async: false, // Wait for thumbnail generation
+          }),
         },
         (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+          if (error) {
+            console.error("Cloudinary upload error:", error);
+            reject(error);
+          } else {
+            console.log("Cloudinary upload result:", JSON.stringify(result, null, 2));
+            resolve(result);
+          }
         }
       );
     });
@@ -78,13 +88,34 @@ export async function POST(req: NextRequest) {
       secure_url: string;
       public_id: string;
       eager?: Array<{ secure_url: string }>;
+      format?: string;
     };
+
+    // For videos, generate thumbnail URL from the video URL if eager didn't work
+    let thumbnailUrl = "";
+    if (isVideo) {
+      if (uploadResult.eager?.[0]?.secure_url) {
+        thumbnailUrl = uploadResult.eager[0].secure_url;
+      } else {
+        // Fallback: Generate thumbnail URL manually from video URL
+        // Replace video extension with jpg and add transformation
+        thumbnailUrl = uploadResult.secure_url
+          .replace(/\.(mp4|webm|mov|avi)$/i, ".jpg")
+          .replace("/video/upload/", "/video/upload/so_0,w_400,h_400,c_fill/");
+      }
+    }
+
+    console.log("Upload response:", {
+      secure_url: uploadResult.secure_url,
+      mediaType: isVideo ? "video" : "image",
+      thumbnailUrl,
+    });
 
     return NextResponse.json({
       secure_url: uploadResult.secure_url,
       public_id: uploadResult.public_id,
       mediaType: isVideo ? "video" : "image",
-      thumbnailUrl: uploadResult.eager?.[0]?.secure_url || "",
+      thumbnailUrl,
     });
   } catch (err) {
     console.error("Upload error:", err);

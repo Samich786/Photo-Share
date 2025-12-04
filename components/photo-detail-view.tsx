@@ -149,15 +149,23 @@ export default function PhotoDetailView({
   return (
     <div className="space-y-6 sm:space-y-8 md:space-y-10">
       {/* Media (Image or Video) */}
-      <div className="relative rounded-lg sm:rounded-xl overflow-hidden shadow-lg -mx-3 sm:mx-0">
+      <div className="relative rounded-lg sm:rounded-xl overflow-hidden shadow-lg -mx-3 sm:mx-0 bg-black">
         {isVideo ? (
           <video
-            src={photo.imageUrl}
+            key={photo.imageUrl}
             controls
             playsInline
-            className="w-full max-h-[300px] sm:max-h-[450px] md:max-h-[550px] object-contain bg-black"
-            poster={photo.thumbnailUrl}
-          />
+            preload="auto"
+            controlsList="nodownload"
+            crossOrigin="anonymous"
+            className="w-full max-h-[300px] sm:max-h-[450px] md:max-h-[550px] object-contain mx-auto"
+            poster={photo.thumbnailUrl || undefined}
+          >
+            <source src={photo.imageUrl} type="video/mp4" />
+            <source src={photo.imageUrl} type="video/webm" />
+            <source src={photo.imageUrl} type="video/quicktime" />
+            Your browser does not support the video tag.
+          </video>
         ) : (
           <img
             src={sanitizeImage(photo.imageUrl)}
@@ -166,7 +174,7 @@ export default function PhotoDetailView({
           />
         )}
         {/* Media type badge */}
-        <div className="absolute top-2 left-2 sm:top-4 sm:left-4">
+        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 z-10">
           <span className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-full ${
             isVideo ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
           }`}>

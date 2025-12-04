@@ -42,6 +42,8 @@ export async function GET(req: NextRequest) {
           id: p._id.toString(),
           title: p.title,
           imageUrl: p.imageUrl,
+          mediaType: p.mediaType || 'image',
+          thumbnailUrl: p.thumbnailUrl || '',
           createdAt: p.createdAt,
           _count: { comments: commentsCount, ratings: ratingsCount },
         };
