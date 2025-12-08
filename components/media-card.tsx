@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { sanitizeImage } from '@/utils/sanitize-image'
+import { Play, Image, MessageCircle, Star, Video } from 'lucide-react'
 
 interface MediaCardProps {
   id: string
@@ -43,9 +44,7 @@ export function MediaCard({
     setIsHovering(true)
     if (videoRef.current && isVideo && !videoError) {
       videoRef.current.currentTime = 0
-      videoRef.current.play().catch(() => {
-        // Ignore autoplay errors
-      })
+      videoRef.current.play().catch(() => {})
     }
   }
 
@@ -60,11 +59,11 @@ export function MediaCard({
   return (
     <Link href={`/photo/${id}`}>
       <div 
-        className="bg-white border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group active:scale-[0.98]"
+        className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-900/50 transition-all duration-300 group active:scale-[0.98] border border-gray-100 dark:border-gray-700"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="relative aspect-square bg-gray-100 overflow-hidden">
+        <div className="relative aspect-square bg-gray-100 dark:bg-gray-700 overflow-hidden">
           {isVideo ? (
             <>
               {/* Video element - shown on hover */}
@@ -96,55 +95,56 @@ export function MediaCard({
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                    <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
+                    <Video className="w-12 h-12 text-gray-600" />
                   </div>
                 )}
               </div>
 
-              {/* Play indicator - hide when hovering and playing */}
+              {/* Play indicator */}
               <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
                 isHovering && !videoError ? 'opacity-0' : 'opacity-100'
               }`}>
-                <div className="bg-black/60 rounded-full p-2 sm:p-3 backdrop-blur-sm">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
+                <div className="bg-black/60 rounded-full p-3 backdrop-blur-sm">
+                  <Play className="w-6 h-6 sm:w-8 sm:h-8 text-white fill-white" />
                 </div>
               </div>
             </>
           ) : (
             <img 
               src={sanitizeImage(imageUrl)} 
-              className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
+              className="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
               alt={title}
               loading="lazy"
             />
           )}
           
           {/* Media type badge */}
-          <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2">
-            <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium rounded ${
-              isVideo ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
+          <div className="absolute top-2 left-2">
+            <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-lg backdrop-blur-sm ${
+              isVideo 
+                ? 'bg-red-500/90 text-white' 
+                : 'bg-violet-500/90 text-white'
             }`}>
-              {isVideo ? '🎬' : '📷'}
-              <span className="hidden sm:inline ml-1">{isVideo ? 'Video' : 'Photo'}</span>
+              {isVideo ? <Video className="w-3 h-3" /> : <Image className="w-3 h-3" />}
+              <span className="hidden sm:inline">{isVideo ? 'Video' : 'Photo'}</span>
             </span>
           </div>
         </div>
         
-        <div className="p-2 sm:p-3 md:p-4">
-          <h3 className="text-sm sm:text-base font-semibold truncate">{title}</h3>
-          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
-            💬 {commentsCount} • ⭐ {ratingsCount}
-          </p>
+        <div className="p-3 sm:p-4">
+          <h3 className="font-semibold text-gray-900 dark:text-white truncate text-sm sm:text-base">{title}</h3>
+          <div className="flex items-center gap-3 mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            <span className="flex items-center gap-1">
+              <MessageCircle className="w-3.5 h-3.5" />
+              {commentsCount}
+            </span>
+            <span className="flex items-center gap-1">
+              <Star className="w-3.5 h-3.5" />
+              {ratingsCount}
+            </span>
+          </div>
         </div>
       </div>
     </Link>
   )
 }
-
-
-
-

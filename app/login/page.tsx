@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
+import { Camera } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,11 +16,13 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="min-h-[70vh] flex flex-col justify-center py-8 sm:py-14">
-      <div className="text-center mb-6 sm:mb-8 px-4">
-        <div className="text-4xl sm:text-5xl mb-3">📸</div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Welcome Back</h1>
-        <p className="text-gray-500 text-sm sm:text-base mt-1">Login to your MediaShare account</p>
+    <div className="min-h-[70vh] flex flex-col justify-center py-12">
+      <div className="text-center mb-8 px-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl shadow-lg shadow-violet-500/25 mb-4">
+          <Camera className="w-8 h-8 text-white" />
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">Login to your MediaShare account</p>
       </div>
       <AuthForm isLogin />
     </div>

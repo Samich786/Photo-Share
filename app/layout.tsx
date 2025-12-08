@@ -22,16 +22,16 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className="bg-gray-50 min-h-screen flex flex-col" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-gray-50 dark:bg-gray-950 min-h-screen flex flex-col text-gray-900 dark:text-gray-100 transition-colors duration-300">
         <Providers>
           <Navbar />
           <main className="flex-1">
             {children}
           </main>
-          <footer className="bg-white border-t mt-auto">
-            <div className="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600 text-sm">
-              <p>&copy; 2025 PhotoShare. A cloud-native media distribution platform.</p>
+          <footer className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-800/50 mt-auto transition-colors">
+            <div className="max-w-7xl mx-auto px-4 py-6 text-center text-gray-500 dark:text-gray-400 text-sm">
+              <p>&copy; 2025 <span className="font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">MediaShare</span>. A cloud-native media platform.</p>
             </div>
           </footer>
         </Providers>
